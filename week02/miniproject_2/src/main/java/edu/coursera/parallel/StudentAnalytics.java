@@ -1,10 +1,8 @@
 package edu.coursera.parallel;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.stream.Stream;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * A simple wrapper class for various analytics methods.
@@ -46,7 +44,17 @@ public final class StudentAnalytics {
      */
     public double averageAgeOfEnrolledStudentsParallelStream(
             final Student[] studentArray) {
-        throw new UnsupportedOperationException();
+        //throw new UnsupportedOperationException();
+
+        double result;
+        result = Arrays.stream(studentArray)
+                        .parallel()
+                        .filter(student -> student.checkIsCurrent())
+                        .mapToDouble(student -> student.getAge())
+                        .average()
+                        .getAsDouble();
+
+        return result;
     }
 
     /**
@@ -100,7 +108,22 @@ public final class StudentAnalytics {
      */
     public String mostCommonFirstNameOfInactiveStudentsParallelStream(
             final Student[] studentArray) {
-        throw new UnsupportedOperationException();
+        //throw new UnsupportedOperationException();
+
+        String result;
+        result = Arrays.stream(studentArray)
+                    .parallel()
+                    .filter(student -> !student.checkIsCurrent())
+                    .map(student -> student.getFirstName())
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                    .entrySet()
+                    .stream()
+                    .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+                    .findFirst()
+                    .get()
+                    .getKey();
+
+        return result;
     }
 
     /**
@@ -136,6 +159,16 @@ public final class StudentAnalytics {
      */
     public int countNumberOfFailedStudentsOlderThan20ParallelStream(
             final Student[] studentArray) {
-        throw new UnsupportedOperationException();
+        //throw new UnsupportedOperationException();
+
+        int result;
+        result = (int) Arrays.stream(studentArray)
+                    .parallel()
+                    .filter(student -> !student.checkIsCurrent())
+                    .filter(student -> student.getAge() > 20)
+                    .filter(student -> student.getGrade() < 65)
+                    .count();
+
+        return result;
     }
 }

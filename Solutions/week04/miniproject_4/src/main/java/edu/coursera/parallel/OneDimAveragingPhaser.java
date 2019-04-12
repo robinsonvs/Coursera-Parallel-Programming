@@ -111,5 +111,47 @@ public final class OneDimAveragingPhaser {
             final double[] myNew, final double[] myVal, final int n,
             final int tasks) {
 
+        Phaser[] phasers = new Phaser[tasks];
+        for (int iterPhasers = 0; iterPhasers < phasers.length; iterPhasers++) {
+            phasers[iterPhasers] = new Phaser(1);
+        }
+
+        Thread[] arrayThreads = new Thread[tasks];
+
+        for (int index = 0; index < tasks; index++) {
+            final int i = index;
+
+            arrayThreads[index] = new Thread(() -> {
+                double[] myArrayVal = myVal;
+                double[] myArrayNew = myNew;
+
+                for (int iter = 0; iter < iterations; iter++) {
+                    final int left = i * (n / tasks) + 1;
+                    final int right = (i + 1) * (n / tasks);
+
+                    for (int j = left; j <= right; j++) {
+                        myArrayNew[j] = (myArrayVal[j - 1] + myArrayVal[j + 1]) / 2.0;
+                    }
+
+                    phasers[i].arrive();
+
+                    if (i - 1 >= 0) phasers[i - 1].awaitAdvance(iter);
+                    if (i + 1 < tasks) phasers[i + 1].awaitAdvance(iter);
+
+                    double[] temp = myArrayNew;
+                    myArrayNew = myArrayVal;
+                    myArrayVal = temp;
+                }
+            });
+            arrayThreads[index].start();
+        }
+
+        for (int index = 0; index < tasks; index++) {
+            try {
+                arrayThreads[index].join();
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            }
+        }
     }
 }
